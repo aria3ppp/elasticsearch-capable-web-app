@@ -57,7 +57,7 @@ func (db Database) DeletePost(postId uint) error {
 
 func (db Database) GetPostById(postId uint) (models.Post, error) {
 	post := models.Post{}
-	query := "SELECT id, title, body FROM posts WHERE NOT is_deleted AND id = $1"
+	query := "SELECT id, title, body FROM posts WHERE id = $1"
 	row := db.conn.QueryRow(query, postId)
 	switch err := row.Scan(&post.ID, &post.Title, &post.Body); err {
 	case sql.ErrNoRows:
@@ -69,7 +69,7 @@ func (db Database) GetPostById(postId uint) (models.Post, error) {
 
 func (db Database) GetPosts() ([]models.Post, error) {
 	var list []models.Post
-	query := "SELECT id, title, body FROM posts WHERE NOT is_deleted ORDER BY id DESC"
+	query := "SELECT id, title, body FROM posts ORDER BY id DESC"
 	rows, err := db.conn.Query(query)
 	if err != nil {
 		return list, err
