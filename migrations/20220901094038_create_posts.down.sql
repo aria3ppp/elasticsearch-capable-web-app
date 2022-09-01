@@ -1,0 +1,7 @@
+BEGIN;
+
+DROP VIEW IF EXISTS posts;
+
+DROP TABLE IF EXISTS posts_store;
+
+COMMIT;
