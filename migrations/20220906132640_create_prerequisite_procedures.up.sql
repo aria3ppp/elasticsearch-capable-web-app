@@ -52,7 +52,6 @@ $$;
 create or replace procedure create_audit_table(
 	p_table text,
 	p_audit_table_name text,
-	p_audit_table_index_name text,
 	p_audit_table_pk_columns_order_sep_by_comma text
 )
 language plpgsql

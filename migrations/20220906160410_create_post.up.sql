@@ -25,7 +25,6 @@ call add_contribution_and_delete_columns(
 call create_audit_table(
 	p_table => 'posts',
 	p_audit_table_name => concat_ws('_', 'posts', 'audit'),
-	p_audit_table_index_name => concat_ws('_', 'posts', 'audit', 'idx', 'id'),
 	p_audit_table_pk_columns_order_sep_by_comma => 'id, contributed_by, contributed_at'
 );
 
