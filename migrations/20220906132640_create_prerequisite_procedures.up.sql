@@ -48,12 +48,12 @@ begin
 end;
 $$;
 
--- create an audit table with index on table primary key column
+-- create an audit table with a primary key index on specified columns
 create or replace procedure create_audit_table(
 	p_table text,
 	p_audit_table_name text,
 	p_audit_table_index_name text,
-	p_audit_table_index_column text
+	p_audit_table_pk_columns_order_sep_by_comma text
 )
 language plpgsql
 as $$
@@ -72,7 +72,7 @@ begin
     v_CREATE_AUDIT_TABLE_BODY = '';
 	
 	for v_row in
-		select column_name, data_type, is_nullable, ordinal_position
+		select column_name, data_type, is_nullable
 		from information_schema.columns
 		where table_name = p_table
 		order by ordinal_position
@@ -83,26 +83,19 @@ begin
 		if v_row.is_nullable = 'NO' then
 			v_CREATE_AUDIT_TABLE_BODY = v_CREATE_AUDIT_TABLE_BODY || ' NOT NULL';
 		end if;
-		
-		-- if this column is not the last one append a comma (,) at the end
-		if not (
-			select MAX(ordinal_position) = v_row.ordinal_position
-			from information_schema.columns
-			where table_name = p_table
-		) then
-			v_CREATE_AUDIT_TABLE_BODY = v_CREATE_AUDIT_TABLE_BODY || ', ';
-		end if;
+
+		v_CREATE_AUDIT_TABLE_BODY = v_CREATE_AUDIT_TABLE_BODY || ', ';
 		
 	end loop;
+
+	-- set primary key
+	v_CREATE_AUDIT_TABLE_BODY = v_CREATE_AUDIT_TABLE_BODY || 'PRIMARY KEY (' || p_audit_table_pk_columns_order_sep_by_comma || ')';
     
+	-- build create audit table command
 	v_CREATE_AUDIT_TABLE_CMD = 'CREATE TABLE IF NOT EXISTS ' || quote_ident(p_audit_table_name) || ' (' || v_CREATE_AUDIT_TABLE_BODY || ')';
 		
 	-- create the audit table
 	execute v_CREATE_AUDIT_TABLE_CMD;
-	
-	-- create index
-	execute 'CREATE INDEX ' || quote_ident(p_audit_table_index_name)
-			|| ' ON ' || quote_ident(p_audit_table_name) || '(' || quote_ident(p_audit_table_index_column) || ')';
 	
 end;
 $$;

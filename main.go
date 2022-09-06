@@ -12,13 +12,13 @@ import (
 	"github.com/rs/zerolog"
 )
 
-// func runThenExit() {
-// 	sqlBoilerDemo()
-// 	os.Exit(0)
-// }
+func runThenExit() {
+	sqlBoilerDemo()
+	os.Exit(0)
+}
 
 func main() {
-	// runThenExit()
+	runThenExit()
 
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 

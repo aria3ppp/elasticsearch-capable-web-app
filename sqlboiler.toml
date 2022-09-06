@@ -1,0 +1,9 @@
+wipe = true
+
+[psql]
+dbname = "elasticsearch-capable-web-app_db"
+host   = "localhost"
+port   = 1234
+user   = "elasticsearch-capable-web-app"
+pass   = "elasticsearch-capable-web-app_secrets"
+sslmode = "disable"
