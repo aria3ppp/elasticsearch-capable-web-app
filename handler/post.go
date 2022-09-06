@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"elasticsearch-capable-web-app/db"
-	"elasticsearch-capable-web-app/models"
+	"elasticsearch-capable-web-app/entity"
 
 	"github.com/labstack/echo/v4"
 )
 
 func (h *Handler) CreatePost(c echo.Context) error {
-	var post models.Post
+	var post entity.Post
 
 	if err := (&echo.DefaultBinder{}).BindBody(c, &post); err != nil {
 		h.logger.Err(err).Msg("could not parse request body")
@@ -36,7 +36,7 @@ func (h *Handler) CreatePost(c echo.Context) error {
 
 func (h *Handler) UpdatePost(c echo.Context) error {
 	var id uint64
-	var post models.Post
+	var post entity.Post
 	var err error
 	if id, err = strconv.ParseUint(c.Param("id"), 10, 0); err != nil {
 		return echo.NewHTTPError(

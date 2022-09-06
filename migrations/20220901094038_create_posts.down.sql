@@ -1,9 +1,0 @@
-BEGIN;
-
-DROP VIEW IF EXISTS posts;
-
-DROP VIEW IF EXISTS posts_log;
-
-DROP TABLE IF EXISTS posts_store;
-
-COMMIT;

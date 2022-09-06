@@ -1,6 +1,2 @@
-build/
-.env
-.idea
-
 sqlboiler_demo.go
 sqlboiler.toml
