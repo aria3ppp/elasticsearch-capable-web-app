@@ -11,7 +11,7 @@ call add_contribution_and_delete_columns(
 	p_contributer_table => 'users',
 	p_contributer_table_pk => 'id',
 	
-	p_column_contributed_by_name => 'contributed_by',
+	p_column_contributed_by_name => 'user_id',
 	p_column_contributed_by_type => 'INT NOT NULL',
 	p_column_contributed_by_fk_constraint_name => concat_ws('_', 'posts', 'fk', 'users'),
 	
@@ -25,7 +25,7 @@ call add_contribution_and_delete_columns(
 call create_audit_table(
 	p_table => 'posts',
 	p_audit_table_name => concat_ws('_', 'posts', 'audit'),
-	p_audit_table_pk_columns_order_sep_by_comma => 'id, contributed_by, contributed_at'
+	p_audit_table_pk_columns_order_sep_by_comma => 'id, user_id, contributed_at'
 );
 
 call create_audit_update_trigger_on_table(

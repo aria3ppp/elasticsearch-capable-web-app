@@ -14,77 +14,66 @@ import "testing"
 func TestParent(t *testing.T) {
 	t.Run("Posts", testPosts)
 	t.Run("PostsAudits", testPostsAudits)
-	t.Run("SchemaMigrations", testSchemaMigrations)
 	t.Run("Users", testUsers)
 }
 
 func TestDelete(t *testing.T) {
 	t.Run("Posts", testPostsDelete)
 	t.Run("PostsAudits", testPostsAuditsDelete)
-	t.Run("SchemaMigrations", testSchemaMigrationsDelete)
 	t.Run("Users", testUsersDelete)
 }
 
 func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Posts", testPostsQueryDeleteAll)
 	t.Run("PostsAudits", testPostsAuditsQueryDeleteAll)
-	t.Run("SchemaMigrations", testSchemaMigrationsQueryDeleteAll)
 	t.Run("Users", testUsersQueryDeleteAll)
 }
 
 func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Posts", testPostsSliceDeleteAll)
 	t.Run("PostsAudits", testPostsAuditsSliceDeleteAll)
-	t.Run("SchemaMigrations", testSchemaMigrationsSliceDeleteAll)
 	t.Run("Users", testUsersSliceDeleteAll)
 }
 
 func TestExists(t *testing.T) {
 	t.Run("Posts", testPostsExists)
 	t.Run("PostsAudits", testPostsAuditsExists)
-	t.Run("SchemaMigrations", testSchemaMigrationsExists)
 	t.Run("Users", testUsersExists)
 }
 
 func TestFind(t *testing.T) {
 	t.Run("Posts", testPostsFind)
 	t.Run("PostsAudits", testPostsAuditsFind)
-	t.Run("SchemaMigrations", testSchemaMigrationsFind)
 	t.Run("Users", testUsersFind)
 }
 
 func TestBind(t *testing.T) {
 	t.Run("Posts", testPostsBind)
 	t.Run("PostsAudits", testPostsAuditsBind)
-	t.Run("SchemaMigrations", testSchemaMigrationsBind)
 	t.Run("Users", testUsersBind)
 }
 
 func TestOne(t *testing.T) {
 	t.Run("Posts", testPostsOne)
 	t.Run("PostsAudits", testPostsAuditsOne)
-	t.Run("SchemaMigrations", testSchemaMigrationsOne)
 	t.Run("Users", testUsersOne)
 }
 
 func TestAll(t *testing.T) {
 	t.Run("Posts", testPostsAll)
 	t.Run("PostsAudits", testPostsAuditsAll)
-	t.Run("SchemaMigrations", testSchemaMigrationsAll)
 	t.Run("Users", testUsersAll)
 }
 
 func TestCount(t *testing.T) {
 	t.Run("Posts", testPostsCount)
 	t.Run("PostsAudits", testPostsAuditsCount)
-	t.Run("SchemaMigrations", testSchemaMigrationsCount)
 	t.Run("Users", testUsersCount)
 }
 
 func TestHooks(t *testing.T) {
 	t.Run("Posts", testPostsHooks)
 	t.Run("PostsAudits", testPostsAuditsHooks)
-	t.Run("SchemaMigrations", testSchemaMigrationsHooks)
 	t.Run("Users", testUsersHooks)
 }
 
@@ -93,8 +82,6 @@ func TestInsert(t *testing.T) {
 	t.Run("Posts", testPostsInsertWhitelist)
 	t.Run("PostsAudits", testPostsAuditsInsert)
 	t.Run("PostsAudits", testPostsAuditsInsertWhitelist)
-	t.Run("SchemaMigrations", testSchemaMigrationsInsert)
-	t.Run("SchemaMigrations", testSchemaMigrationsInsertWhitelist)
 	t.Run("Users", testUsersInsert)
 	t.Run("Users", testUsersInsertWhitelist)
 }
@@ -102,7 +89,7 @@ func TestInsert(t *testing.T) {
 // TestToOne tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOne(t *testing.T) {
-	t.Run("PostToUserUsingContributedByUser", testPostToOneUserUsingContributedByUser)
+	t.Run("PostToUserUsingUser", testPostToOneUserUsingUser)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -112,13 +99,13 @@ func TestOneToOne(t *testing.T) {}
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToMany(t *testing.T) {
-	t.Run("UserToContributedByPosts", testUserToManyContributedByPosts)
+	t.Run("UserToPosts", testUserToManyPosts)
 }
 
 // TestToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToOneSet(t *testing.T) {
-	t.Run("PostToUserUsingContributedByPosts", testPostToOneSetOpUserUsingContributedByUser)
+	t.Run("PostToUserUsingPosts", testPostToOneSetOpUserUsingUser)
 }
 
 // TestToOneRemove tests cannot be run in parallel
@@ -136,7 +123,7 @@ func TestOneToOneRemove(t *testing.T) {}
 // TestToManyAdd tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyAdd(t *testing.T) {
-	t.Run("UserToContributedByPosts", testUserToManyAddOpContributedByPosts)
+	t.Run("UserToPosts", testUserToManyAddOpPosts)
 }
 
 // TestToManySet tests cannot be run in parallel
@@ -150,34 +137,29 @@ func TestToManyRemove(t *testing.T) {}
 func TestReload(t *testing.T) {
 	t.Run("Posts", testPostsReload)
 	t.Run("PostsAudits", testPostsAuditsReload)
-	t.Run("SchemaMigrations", testSchemaMigrationsReload)
 	t.Run("Users", testUsersReload)
 }
 
 func TestReloadAll(t *testing.T) {
 	t.Run("Posts", testPostsReloadAll)
 	t.Run("PostsAudits", testPostsAuditsReloadAll)
-	t.Run("SchemaMigrations", testSchemaMigrationsReloadAll)
 	t.Run("Users", testUsersReloadAll)
 }
 
 func TestSelect(t *testing.T) {
 	t.Run("Posts", testPostsSelect)
 	t.Run("PostsAudits", testPostsAuditsSelect)
-	t.Run("SchemaMigrations", testSchemaMigrationsSelect)
 	t.Run("Users", testUsersSelect)
 }
 
 func TestUpdate(t *testing.T) {
 	t.Run("Posts", testPostsUpdate)
 	t.Run("PostsAudits", testPostsAuditsUpdate)
-	t.Run("SchemaMigrations", testSchemaMigrationsUpdate)
 	t.Run("Users", testUsersUpdate)
 }
 
 func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Posts", testPostsSliceUpdateAll)
 	t.Run("PostsAudits", testPostsAuditsSliceUpdateAll)
-	t.Run("SchemaMigrations", testSchemaMigrationsSliceUpdateAll)
 	t.Run("Users", testUsersSliceUpdateAll)
 }

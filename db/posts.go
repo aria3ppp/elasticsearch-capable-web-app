@@ -1,73 +1,77 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
-	"elasticsearch-capable-web-app/entity"
+	"elasticsearch-capable-web-app/models"
+
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 var ErrNoRecord = fmt.Errorf("no matching record found")
 
-func (db Database) CreatePost(post *entity.Post) error {
-	query := `INSERT INTO posts (title, body, contributed_by) VALUES ($1, $2, 1) RETURNING id`
-	err := db.conn.QueryRow(query, post.Title, post.Body).Scan(&post.ID)
-	if err != nil {
-		return err
-	}
-	return nil
+func (db Database) CreatePost(post *models.Post) error {
+	post.UserID = defaultUser.ID
+	return post.Insert(context.Background(), db.conn, boil.Infer())
 }
 
-func (db Database) UpdatePost(postId uint, post entity.Post) error {
-	query := `UPDATE posts SET title = $1, body = $2 WHERE id = $3`
-	err := db.conn.QueryRow(query, post.Title, post.Body, postId).Err()
+func (db Database) UpdatePost(postId int, post models.Post) error {
+	_, err := models.Posts(
+		models.PostWhere.ID.EQ(postId),
+	).UpdateAll(
+		context.Background(),
+		db.conn,
+		models.M{
+			models.PostColumns.UserID: defaultUser.ID,
+			models.PostColumns.Title:  post.Title,
+			models.PostColumns.Body:   post.Body,
+		},
+	)
+	if err == sql.ErrNoRows {
+		return ErrNoRecord
+	}
+	return err
+}
+
+func (db Database) DeletePost(postId int) error {
+	_, err := models.Posts(
+		models.PostWhere.ID.EQ(postId),
+	).UpdateAll(
+		context.Background(),
+		db.conn,
+		models.M{
+			models.PostColumns.UserID:  defaultUser.ID,
+			models.PostColumns.Deleted: true,
+		},
+	)
+	if err == sql.ErrNoRows {
+		return ErrNoRecord
+	}
+	return err
+}
+
+func (db Database) GetPostById(postId int) (*models.Post, error) {
+	user, err := models.Posts(
+		models.PostWhere.ID.EQ(postId),
+		models.PostWhere.Deleted.EQ(false),
+	).One(context.Background(), db.conn)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return ErrNoRecord
+			return nil, ErrNoRecord
 		}
-		return err
+		return nil, err
 	}
-	return nil
+	return user, nil
 }
 
-func (db Database) DeletePost(postId uint) error {
-	query := `UPDATE posts SET deleted = TRUE WHERE id = $1`
-	err := db.conn.QueryRow(query, postId).Err()
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNoRecord
-		}
-		return err
+func (db Database) GetPosts() ([]*models.Post, error) {
+	posts, err := models.Posts(
+		models.PostWhere.Deleted.EQ(false),
+	).All(context.Background(), db.conn)
+	if err == sql.ErrNoRows {
+		return nil, ErrNoRecord
 	}
-	return nil
-}
-
-func (db Database) GetPostById(postId uint) (entity.Post, error) {
-	post := entity.Post{}
-	query := "SELECT id, title, body FROM posts WHERE NOT deleted AND id = $1"
-	row := db.conn.QueryRow(query, postId)
-	switch err := row.Scan(&post.ID, &post.Title, &post.Body); err {
-	case sql.ErrNoRows:
-		return post, ErrNoRecord
-	default:
-		return post, err
-	}
-}
-
-func (db Database) GetPosts() ([]entity.Post, error) {
-	var list []entity.Post
-	query := "SELECT id, title, body FROM posts WHERE NOT deleted ORDER BY id DESC"
-	rows, err := db.conn.Query(query)
-	if err != nil {
-		return list, err
-	}
-	for rows.Next() {
-		var post entity.Post
-		err := rows.Scan(&post.ID, &post.Title, &post.Body)
-		if err != nil {
-			return list, err
-		}
-		list = append(list, post)
-	}
-	return list, nil
+	return posts, nil
 }

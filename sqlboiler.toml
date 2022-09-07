@@ -1,9 +1,11 @@
 wipe = true
 
 [psql]
+blacklist = ["schema_migrations"]
+
 dbname = "elasticsearch-capable-web-app_db"
 host   = "localhost"
-port   = 1234
+port   = 5432
 user   = "elasticsearch-capable-web-app"
 pass   = "elasticsearch-capable-web-app_secrets"
 sslmode = "disable"

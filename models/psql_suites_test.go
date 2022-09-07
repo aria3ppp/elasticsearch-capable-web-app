@@ -10,7 +10,5 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("PostsAudits", testPostsAuditsUpsert)
 
-	t.Run("SchemaMigrations", testSchemaMigrationsUpsert)
-
 	t.Run("Users", testUsersUpsert)
 }

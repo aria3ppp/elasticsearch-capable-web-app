@@ -12,14 +12,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func runThenExit() {
-	sqlBoilerDemo()
-	os.Exit(0)
-}
+//go:generate sqlboiler --wipe psql
 
 func main() {
-	runThenExit()
-
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
 	dbConfig := db.ConnConfig{

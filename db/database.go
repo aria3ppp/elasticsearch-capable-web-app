@@ -1,11 +1,15 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
+	"elasticsearch-capable-web-app/models"
+
 	_ "github.com/lib/pq"
 	"github.com/rs/zerolog"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
 type Database struct {
@@ -38,24 +42,22 @@ func New(cfg ConnConfig, logger zerolog.Logger) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	createOrUpdateDefaultUser(conn)
+	upsertDefaultUser(conn)
 	return &Database{conn: conn, logger: logger}, nil
 }
 
-func createOrUpdateDefaultUser(db *sql.DB) {
-	var id int
-	err := db.QueryRow(`SELECT id FROM users WHERE id = 1`).Scan(&id)
+var defaultUser = &models.User{ID: 1, Name: "aria"}
+
+func upsertDefaultUser(db *sql.DB) {
+	err := defaultUser.Upsert(
+		context.Background(),
+		db,
+		false, // do nothing on conflict users.id
+		[]string{models.UserColumns.ID},
+		boil.None(),
+		boil.Infer(),
+	)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			err = db.QueryRow(
-				`INSERT INTO users (id, name) VALUES (1, $1) RETURNING id`,
-				"aria",
-			).Scan(&id)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			panic(err)
-		}
+		panic(err)
 	}
 }

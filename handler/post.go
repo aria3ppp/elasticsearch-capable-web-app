@@ -9,13 +9,13 @@ import (
 	"strings"
 
 	"elasticsearch-capable-web-app/db"
-	"elasticsearch-capable-web-app/entity"
+	"elasticsearch-capable-web-app/models"
 
 	"github.com/labstack/echo/v4"
 )
 
 func (h *Handler) CreatePost(c echo.Context) error {
-	var post entity.Post
+	var post models.Post
 
 	if err := (&echo.DefaultBinder{}).BindBody(c, &post); err != nil {
 		h.logger.Err(err).Msg("could not parse request body")
@@ -36,7 +36,7 @@ func (h *Handler) CreatePost(c echo.Context) error {
 
 func (h *Handler) UpdatePost(c echo.Context) error {
 	var id uint64
-	var post entity.Post
+	var post models.Post
 	var err error
 	if id, err = strconv.ParseUint(c.Param("id"), 10, 0); err != nil {
 		return echo.NewHTTPError(
@@ -51,7 +51,7 @@ func (h *Handler) UpdatePost(c echo.Context) error {
 		)
 	}
 
-	err = h.db.UpdatePost(uint(id), post)
+	err = h.db.UpdatePost(int(id), post)
 	if err != nil {
 		if err == db.ErrNoRecord {
 			return echo.NewHTTPError(
@@ -85,7 +85,7 @@ func (h *Handler) DeletePost(c echo.Context) error {
 			echo.Map{"error": "invalid post id"},
 		)
 	}
-	err = h.db.DeletePost(uint(id))
+	err = h.db.DeletePost(int(id))
 	if err != nil {
 		if err == db.ErrNoRecord {
 			return echo.NewHTTPError(
@@ -132,7 +132,7 @@ func (h *Handler) GetPost(c echo.Context) error {
 			echo.Map{"error": "invalid post id"},
 		)
 	}
-	post, err := h.db.GetPostById(uint(id))
+	post, err := h.db.GetPostById(int(id))
 	if err != nil {
 		if err == db.ErrNoRecord {
 			return echo.NewHTTPError(
