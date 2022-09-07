@@ -36,31 +36,4 @@ call create_audit_update_trigger_on_table(
 	p_trigger_function_name => concat_ws('_', 'update', 'posts', 'trigger', 'audit')
 );
 
---------------------------------------------------------------------------------------------------------------------
-
--- CREATE TABLE IF NOT EXISTS vidoes(
--- 	id SERIAL PRIMARY KEY,
--- 	post_id INT NOT NULL,
--- 	post_modified_at TIMESTAMPTZ NOT NULL,
--- 	name TEXT NOT NULL,
--- 	deleted BOOLEAN NOT NULL DEFAULT FALSE,
-
--- 	FOREIGN KEY (post_id, post_modified_at) REFERENCES posts_store (id,modified_at)
---  );
-
---  CREATE TABLE IF NOT EXISTS tags (
--- 	id SERIAL PRIMARY KEY,
--- 	name TEXT NOT NULL,
--- 	deleted BOOLEAN NOT NULL DEFAULT FALSE
---  );
-
---  CREATE TABLE IF NOT EXISTS tags_videos(
--- 	video_id INT NOT NULL,
--- 	tag_id INT NOT NULL,
-
--- 	PRIMARY KEY (video_id, tag_id),
--- 	FOREIGN KEY (video_id) REFERENCES vidoes (id),
--- 	FOREIGN KEY (tag_id) REFERENCES tags (id)
---  );
-
 COMMIT;
