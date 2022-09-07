@@ -124,7 +124,7 @@ begin
 	v_trigger_func_cmd = 'CREATE OR REPLACE FUNCTION ' || p_trigger_function_name || '() RETURNS TRIGGER ' 
 						|| 'LANGUAGE plpgsql AS $$ ' || v_trigger_func_body || ' $$';
 	
-	raise notice 'trigger func cmd: %', v_trigger_func_cmd;
+	-- raise notice 'trigger func cmd: %', v_trigger_func_cmd;
 	
 	-- create trigger function
 	execute v_trigger_func_cmd;
@@ -134,7 +134,7 @@ begin
 									|| 'BEFORE UPDATE ON ' || p_table || ' '
 									|| 'FOR EACH ROW EXECUTE FUNCTION ' || p_trigger_function_name || '()';
 									
-	raise notice 'create trigger cmd: %', v_create_trigger_on_table_cmd;
+	-- raise notice 'create trigger cmd: %', v_create_trigger_on_table_cmd;
 	
 	-- create trigger on table
 	execute v_create_trigger_on_table_cmd;
