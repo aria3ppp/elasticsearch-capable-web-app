@@ -1,3 +1,5 @@
+BEGIN;
+
 -- add complement contribution and deleted columns to table
 create or replace procedure add_contribution_and_delete_columns(
 	p_table text,
@@ -141,3 +143,5 @@ begin
 	
 end;
 $body$;
+
+COMMIT;
