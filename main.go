@@ -12,8 +12,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-//go:generate sqlboiler --wipe psql
-
 func main() {
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
