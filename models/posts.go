@@ -26,7 +26,7 @@ type Post struct {
 	ID            int       `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Title         string    `boil:"title" json:"title" toml:"title" yaml:"title"`
 	Body          string    `boil:"body" json:"body" toml:"body" yaml:"body"`
-	UserID        int       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	ContributedBy int       `boil:"contributed_by" json:"contributed_by" toml:"contributed_by" yaml:"contributed_by"`
 	ContributedAt time.Time `boil:"contributed_at" json:"contributed_at" toml:"contributed_at" yaml:"contributed_at"`
 	Deleted       bool      `boil:"deleted" json:"deleted" toml:"deleted" yaml:"deleted"`
 
@@ -38,14 +38,14 @@ var PostColumns = struct {
 	ID            string
 	Title         string
 	Body          string
-	UserID        string
+	ContributedBy string
 	ContributedAt string
 	Deleted       string
 }{
 	ID:            "id",
 	Title:         "title",
 	Body:          "body",
-	UserID:        "user_id",
+	ContributedBy: "contributed_by",
 	ContributedAt: "contributed_at",
 	Deleted:       "deleted",
 }
@@ -54,14 +54,14 @@ var PostTableColumns = struct {
 	ID            string
 	Title         string
 	Body          string
-	UserID        string
+	ContributedBy string
 	ContributedAt string
 	Deleted       string
 }{
 	ID:            "posts.id",
 	Title:         "posts.title",
 	Body:          "posts.body",
-	UserID:        "posts.user_id",
+	ContributedBy: "posts.contributed_by",
 	ContributedAt: "posts.contributed_at",
 	Deleted:       "posts.deleted",
 }
@@ -148,28 +148,28 @@ var PostWhere = struct {
 	ID            whereHelperint
 	Title         whereHelperstring
 	Body          whereHelperstring
-	UserID        whereHelperint
+	ContributedBy whereHelperint
 	ContributedAt whereHelpertime_Time
 	Deleted       whereHelperbool
 }{
 	ID:            whereHelperint{field: "\"posts\".\"id\""},
 	Title:         whereHelperstring{field: "\"posts\".\"title\""},
 	Body:          whereHelperstring{field: "\"posts\".\"body\""},
-	UserID:        whereHelperint{field: "\"posts\".\"user_id\""},
+	ContributedBy: whereHelperint{field: "\"posts\".\"contributed_by\""},
 	ContributedAt: whereHelpertime_Time{field: "\"posts\".\"contributed_at\""},
 	Deleted:       whereHelperbool{field: "\"posts\".\"deleted\""},
 }
 
 // PostRels is where relationship names are stored.
 var PostRels = struct {
-	User string
+	ContributingUser string
 }{
-	User: "User",
+	ContributingUser: "ContributingUser",
 }
 
 // postR is where relationships are stored.
 type postR struct {
-	User *User `boil:"User" json:"User" toml:"User" yaml:"User"`
+	ContributingUser *User `boil:"ContributingUser" json:"ContributingUser" toml:"ContributingUser" yaml:"ContributingUser"`
 }
 
 // NewStruct creates a new relationship struct
@@ -177,19 +177,19 @@ func (*postR) NewStruct() *postR {
 	return &postR{}
 }
 
-func (r *postR) GetUser() *User {
+func (r *postR) GetContributingUser() *User {
 	if r == nil {
 		return nil
 	}
-	return r.User
+	return r.ContributingUser
 }
 
 // postL is where Load methods for each relationship are stored.
 type postL struct{}
 
 var (
-	postAllColumns            = []string{"id", "title", "body", "user_id", "contributed_at", "deleted"}
-	postColumnsWithoutDefault = []string{"title", "body", "user_id"}
+	postAllColumns            = []string{"id", "title", "body", "contributed_by", "contributed_at", "deleted"}
+	postColumnsWithoutDefault = []string{"title", "body", "contributed_by"}
 	postColumnsWithDefault    = []string{"id", "contributed_at", "deleted"}
 	postPrimaryKeyColumns     = []string{"id"}
 	postGeneratedColumns      = []string{}
@@ -473,10 +473,10 @@ func (q postQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
-// User pointed to by the foreign key.
-func (o *Post) User(mods ...qm.QueryMod) userQuery {
+// ContributingUser pointed to by the foreign key.
+func (o *Post) ContributingUser(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.UserID),
+		qm.Where("\"id\" = ?", o.ContributedBy),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -484,9 +484,9 @@ func (o *Post) User(mods ...qm.QueryMod) userQuery {
 	return Users(queryMods...)
 }
 
-// LoadUser allows an eager lookup of values, cached into the
+// LoadContributingUser allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (postL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybePost interface{}, mods queries.Applicator) error {
+func (postL) LoadContributingUser(ctx context.Context, e boil.ContextExecutor, singular bool, maybePost interface{}, mods queries.Applicator) error {
 	var slice []*Post
 	var object *Post
 
@@ -517,7 +517,7 @@ func (postL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool
 		if object.R == nil {
 			object.R = &postR{}
 		}
-		args = append(args, object.UserID)
+		args = append(args, object.ContributedBy)
 
 	} else {
 	Outer:
@@ -527,12 +527,12 @@ func (postL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool
 			}
 
 			for _, a := range args {
-				if a == obj.UserID {
+				if a == obj.ContributedBy {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.UserID)
+			args = append(args, obj.ContributedBy)
 
 		}
 	}
@@ -580,22 +580,22 @@ func (postL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.User = foreign
+		object.R.ContributingUser = foreign
 		if foreign.R == nil {
 			foreign.R = &userR{}
 		}
-		foreign.R.Posts = append(foreign.R.Posts, object)
+		foreign.R.ContributedPosts = append(foreign.R.ContributedPosts, object)
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.UserID == foreign.ID {
-				local.R.User = foreign
+			if local.ContributedBy == foreign.ID {
+				local.R.ContributingUser = foreign
 				if foreign.R == nil {
 					foreign.R = &userR{}
 				}
-				foreign.R.Posts = append(foreign.R.Posts, local)
+				foreign.R.ContributedPosts = append(foreign.R.ContributedPosts, local)
 				break
 			}
 		}
@@ -604,10 +604,10 @@ func (postL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular bool
 	return nil
 }
 
-// SetUser of the post to the related item.
-// Sets o.R.User to related.
-// Adds o to related.R.Posts.
-func (o *Post) SetUser(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
+// SetContributingUser of the post to the related item.
+// Sets o.R.ContributingUser to related.
+// Adds o to related.R.ContributedPosts.
+func (o *Post) SetContributingUser(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -617,7 +617,7 @@ func (o *Post) SetUser(ctx context.Context, exec boil.ContextExecutor, insert bo
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"posts\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"contributed_by"}),
 		strmangle.WhereClause("\"", "\"", 2, postPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -631,21 +631,21 @@ func (o *Post) SetUser(ctx context.Context, exec boil.ContextExecutor, insert bo
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.UserID = related.ID
+	o.ContributedBy = related.ID
 	if o.R == nil {
 		o.R = &postR{
-			User: related,
+			ContributingUser: related,
 		}
 	} else {
-		o.R.User = related
+		o.R.ContributingUser = related
 	}
 
 	if related.R == nil {
 		related.R = &userR{
-			Posts: PostSlice{o},
+			ContributedPosts: PostSlice{o},
 		}
 	} else {
-		related.R.Posts = append(related.R.Posts, o)
+		related.R.ContributedPosts = append(related.R.ContributedPosts, o)
 	}
 
 	return nil

@@ -58,14 +58,14 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	Posts string
+	ContributedPosts string
 }{
-	Posts: "Posts",
+	ContributedPosts: "ContributedPosts",
 }
 
 // userR is where relationships are stored.
 type userR struct {
-	Posts PostSlice `boil:"Posts" json:"Posts" toml:"Posts" yaml:"Posts"`
+	ContributedPosts PostSlice `boil:"ContributedPosts" json:"ContributedPosts" toml:"ContributedPosts" yaml:"ContributedPosts"`
 }
 
 // NewStruct creates a new relationship struct
@@ -73,11 +73,11 @@ func (*userR) NewStruct() *userR {
 	return &userR{}
 }
 
-func (r *userR) GetPosts() PostSlice {
+func (r *userR) GetContributedPosts() PostSlice {
 	if r == nil {
 		return nil
 	}
-	return r.Posts
+	return r.ContributedPosts
 }
 
 // userL is where Load methods for each relationship are stored.
@@ -369,23 +369,23 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
-// Posts retrieves all the post's Posts with an executor.
-func (o *User) Posts(mods ...qm.QueryMod) postQuery {
+// ContributedPosts retrieves all the post's Posts with an executor via contributed_by column.
+func (o *User) ContributedPosts(mods ...qm.QueryMod) postQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"posts\".\"user_id\"=?", o.ID),
+		qm.Where("\"posts\".\"contributed_by\"=?", o.ID),
 	)
 
 	return Posts(queryMods...)
 }
 
-// LoadPosts allows an eager lookup of values, cached into the
+// LoadContributedPosts allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (userL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+func (userL) LoadContributedPosts(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
 	var slice []*User
 	var object *User
 
@@ -440,7 +440,7 @@ func (userL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular boo
 
 	query := NewQuery(
 		qm.From(`posts`),
-		qm.WhereIn(`posts.user_id in ?`, args...),
+		qm.WhereIn(`posts.contributed_by in ?`, args...),
 	)
 	if mods != nil {
 		mods.Apply(query)
@@ -471,24 +471,24 @@ func (userL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular boo
 		}
 	}
 	if singular {
-		object.R.Posts = resultSlice
+		object.R.ContributedPosts = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
 				foreign.R = &postR{}
 			}
-			foreign.R.User = object
+			foreign.R.ContributingUser = object
 		}
 		return nil
 	}
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.ID == foreign.UserID {
-				local.R.Posts = append(local.R.Posts, foreign)
+			if local.ID == foreign.ContributedBy {
+				local.R.ContributedPosts = append(local.R.ContributedPosts, foreign)
 				if foreign.R == nil {
 					foreign.R = &postR{}
 				}
-				foreign.R.User = local
+				foreign.R.ContributingUser = local
 				break
 			}
 		}
@@ -497,22 +497,22 @@ func (userL) LoadPosts(ctx context.Context, e boil.ContextExecutor, singular boo
 	return nil
 }
 
-// AddPosts adds the given related objects to the existing relationships
+// AddContributedPosts adds the given related objects to the existing relationships
 // of the user, optionally inserting them as new records.
-// Appends related to o.R.Posts.
-// Sets related.R.User appropriately.
-func (o *User) AddPosts(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Post) error {
+// Appends related to o.R.ContributedPosts.
+// Sets related.R.ContributingUser appropriately.
+func (o *User) AddContributedPosts(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Post) error {
 	var err error
 	for _, rel := range related {
 		if insert {
-			rel.UserID = o.ID
+			rel.ContributedBy = o.ID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"posts\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
+				strmangle.SetParamNames("\"", "\"", 1, []string{"contributed_by"}),
 				strmangle.WhereClause("\"", "\"", 2, postPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
@@ -526,25 +526,25 @@ func (o *User) AddPosts(ctx context.Context, exec boil.ContextExecutor, insert b
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			rel.UserID = o.ID
+			rel.ContributedBy = o.ID
 		}
 	}
 
 	if o.R == nil {
 		o.R = &userR{
-			Posts: related,
+			ContributedPosts: related,
 		}
 	} else {
-		o.R.Posts = append(o.R.Posts, related...)
+		o.R.ContributedPosts = append(o.R.ContributedPosts, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &postR{
-				User: o,
+				ContributingUser: o,
 			}
 		} else {
-			rel.R.User = o
+			rel.R.ContributingUser = o
 		}
 	}
 	return nil

@@ -13,7 +13,7 @@ import (
 var ErrNoRecord = fmt.Errorf("no matching record found")
 
 func (db Database) CreatePost(post *models.Post) error {
-	post.UserID = defaultUser.ID
+	post.ContributedBy = defaultUser.ID
 	return post.Insert(context.Background(), db.conn, boil.Infer())
 }
 
@@ -24,9 +24,9 @@ func (db Database) UpdatePost(postId int, post models.Post) error {
 		context.Background(),
 		db.conn,
 		models.M{
-			models.PostColumns.UserID: defaultUser.ID,
-			models.PostColumns.Title:  post.Title,
-			models.PostColumns.Body:   post.Body,
+			models.PostColumns.ContributedBy: defaultUser.ID,
+			models.PostColumns.Title:         post.Title,
+			models.PostColumns.Body:          post.Body,
 		},
 	)
 	if err == sql.ErrNoRows {
@@ -42,8 +42,8 @@ func (db Database) DeletePost(postId int) error {
 		context.Background(),
 		db.conn,
 		models.M{
-			models.PostColumns.UserID:  defaultUser.ID,
-			models.PostColumns.Deleted: true,
+			models.PostColumns.ContributedBy: defaultUser.ID,
+			models.PostColumns.Deleted:       true,
 		},
 	)
 	if err == sql.ErrNoRows {

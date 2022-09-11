@@ -494,7 +494,7 @@ func testUsersInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testUserToManyPosts(t *testing.T) {
+func testUserToManyContributedPosts(t *testing.T) {
 	var err error
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
@@ -519,8 +519,8 @@ func testUserToManyPosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b.UserID = a.ID
-	c.UserID = a.ID
+	b.ContributedBy = a.ID
+	c.ContributedBy = a.ID
 
 	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
@@ -529,17 +529,17 @@ func testUserToManyPosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	check, err := a.Posts().All(ctx, tx)
+	check, err := a.ContributedPosts().All(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	bFound, cFound := false, false
 	for _, v := range check {
-		if v.UserID == b.UserID {
+		if v.ContributedBy == b.ContributedBy {
 			bFound = true
 		}
-		if v.UserID == c.UserID {
+		if v.ContributedBy == c.ContributedBy {
 			cFound = true
 		}
 	}
@@ -552,18 +552,18 @@ func testUserToManyPosts(t *testing.T) {
 	}
 
 	slice := UserSlice{&a}
-	if err = a.L.LoadPosts(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+	if err = a.L.LoadContributedPosts(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.Posts); got != 2 {
+	if got := len(a.R.ContributedPosts); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
-	a.R.Posts = nil
-	if err = a.L.LoadPosts(ctx, tx, true, &a, nil); err != nil {
+	a.R.ContributedPosts = nil
+	if err = a.L.LoadContributedPosts(ctx, tx, true, &a, nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.Posts); got != 2 {
+	if got := len(a.R.ContributedPosts); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
@@ -572,7 +572,7 @@ func testUserToManyPosts(t *testing.T) {
 	}
 }
 
-func testUserToManyAddOpPosts(t *testing.T) {
+func testUserToManyAddOpContributedPosts(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -609,7 +609,7 @@ func testUserToManyAddOpPosts(t *testing.T) {
 	}
 
 	for i, x := range foreignersSplitByInsertion {
-		err = a.AddPosts(ctx, tx, i != 0, x...)
+		err = a.AddContributedPosts(ctx, tx, i != 0, x...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -617,28 +617,28 @@ func testUserToManyAddOpPosts(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if a.ID != first.UserID {
-			t.Error("foreign key was wrong value", a.ID, first.UserID)
+		if a.ID != first.ContributedBy {
+			t.Error("foreign key was wrong value", a.ID, first.ContributedBy)
 		}
-		if a.ID != second.UserID {
-			t.Error("foreign key was wrong value", a.ID, second.UserID)
+		if a.ID != second.ContributedBy {
+			t.Error("foreign key was wrong value", a.ID, second.ContributedBy)
 		}
 
-		if first.R.User != &a {
+		if first.R.ContributingUser != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
-		if second.R.User != &a {
+		if second.R.ContributingUser != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
 
-		if a.R.Posts[i*2] != first {
+		if a.R.ContributedPosts[i*2] != first {
 			t.Error("relationship struct slice not set to correct value")
 		}
-		if a.R.Posts[i*2+1] != second {
+		if a.R.ContributedPosts[i*2+1] != second {
 			t.Error("relationship struct slice not set to correct value")
 		}
 
-		count, err := a.Posts().Count(ctx, tx)
+		count, err := a.ContributedPosts().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}

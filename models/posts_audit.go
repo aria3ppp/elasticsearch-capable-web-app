@@ -26,7 +26,7 @@ type PostsAudit struct {
 	ID            int       `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Title         string    `boil:"title" json:"title" toml:"title" yaml:"title"`
 	Body          string    `boil:"body" json:"body" toml:"body" yaml:"body"`
-	UserID        int       `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	ContributedBy int       `boil:"contributed_by" json:"contributed_by" toml:"contributed_by" yaml:"contributed_by"`
 	ContributedAt time.Time `boil:"contributed_at" json:"contributed_at" toml:"contributed_at" yaml:"contributed_at"`
 	Deleted       bool      `boil:"deleted" json:"deleted" toml:"deleted" yaml:"deleted"`
 
@@ -38,14 +38,14 @@ var PostsAuditColumns = struct {
 	ID            string
 	Title         string
 	Body          string
-	UserID        string
+	ContributedBy string
 	ContributedAt string
 	Deleted       string
 }{
 	ID:            "id",
 	Title:         "title",
 	Body:          "body",
-	UserID:        "user_id",
+	ContributedBy: "contributed_by",
 	ContributedAt: "contributed_at",
 	Deleted:       "deleted",
 }
@@ -54,14 +54,14 @@ var PostsAuditTableColumns = struct {
 	ID            string
 	Title         string
 	Body          string
-	UserID        string
+	ContributedBy string
 	ContributedAt string
 	Deleted       string
 }{
 	ID:            "posts_audit.id",
 	Title:         "posts_audit.title",
 	Body:          "posts_audit.body",
-	UserID:        "posts_audit.user_id",
+	ContributedBy: "posts_audit.contributed_by",
 	ContributedAt: "posts_audit.contributed_at",
 	Deleted:       "posts_audit.deleted",
 }
@@ -72,14 +72,14 @@ var PostsAuditWhere = struct {
 	ID            whereHelperint
 	Title         whereHelperstring
 	Body          whereHelperstring
-	UserID        whereHelperint
+	ContributedBy whereHelperint
 	ContributedAt whereHelpertime_Time
 	Deleted       whereHelperbool
 }{
 	ID:            whereHelperint{field: "\"posts_audit\".\"id\""},
 	Title:         whereHelperstring{field: "\"posts_audit\".\"title\""},
 	Body:          whereHelperstring{field: "\"posts_audit\".\"body\""},
-	UserID:        whereHelperint{field: "\"posts_audit\".\"user_id\""},
+	ContributedBy: whereHelperint{field: "\"posts_audit\".\"contributed_by\""},
 	ContributedAt: whereHelpertime_Time{field: "\"posts_audit\".\"contributed_at\""},
 	Deleted:       whereHelperbool{field: "\"posts_audit\".\"deleted\""},
 }
@@ -101,10 +101,10 @@ func (*postsAuditR) NewStruct() *postsAuditR {
 type postsAuditL struct{}
 
 var (
-	postsAuditAllColumns            = []string{"id", "title", "body", "user_id", "contributed_at", "deleted"}
-	postsAuditColumnsWithoutDefault = []string{"id", "title", "body", "user_id", "contributed_at", "deleted"}
+	postsAuditAllColumns            = []string{"id", "title", "body", "contributed_by", "contributed_at", "deleted"}
+	postsAuditColumnsWithoutDefault = []string{"id", "title", "body", "contributed_by", "contributed_at", "deleted"}
 	postsAuditColumnsWithDefault    = []string{}
-	postsAuditPrimaryKeyColumns     = []string{"id", "user_id", "contributed_at"}
+	postsAuditPrimaryKeyColumns     = []string{"id", "contributed_by", "contributed_at"}
 	postsAuditGeneratedColumns      = []string{}
 )
 
@@ -399,7 +399,7 @@ func PostsAudits(mods ...qm.QueryMod) postsAuditQuery {
 
 // FindPostsAudit retrieves a single record by ID with an executor.
 // If selectCols is empty Find will return all columns.
-func FindPostsAudit(ctx context.Context, exec boil.ContextExecutor, iD int, userID int, contributedAt time.Time, selectCols ...string) (*PostsAudit, error) {
+func FindPostsAudit(ctx context.Context, exec boil.ContextExecutor, iD int, contributedBy int, contributedAt time.Time, selectCols ...string) (*PostsAudit, error) {
 	postsAuditObj := &PostsAudit{}
 
 	sel := "*"
@@ -407,10 +407,10 @@ func FindPostsAudit(ctx context.Context, exec boil.ContextExecutor, iD int, user
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"posts_audit\" where \"id\"=$1 AND \"user_id\"=$2 AND \"contributed_at\"=$3", sel,
+		"select %s from \"posts_audit\" where \"id\"=$1 AND \"contributed_by\"=$2 AND \"contributed_at\"=$3", sel,
 	)
 
-	q := queries.Raw(query, iD, userID, contributedAt)
+	q := queries.Raw(query, iD, contributedBy, contributedAt)
 
 	err := q.Bind(ctx, exec, postsAuditObj)
 	if err != nil {
@@ -762,7 +762,7 @@ func (o *PostsAudit) Delete(ctx context.Context, exec boil.ContextExecutor) (int
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), postsAuditPrimaryKeyMapping)
-	sql := "DELETE FROM \"posts_audit\" WHERE \"id\"=$1 AND \"user_id\"=$2 AND \"contributed_at\"=$3"
+	sql := "DELETE FROM \"posts_audit\" WHERE \"id\"=$1 AND \"contributed_by\"=$2 AND \"contributed_at\"=$3"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -859,7 +859,7 @@ func (o PostsAuditSlice) DeleteAll(ctx context.Context, exec boil.ContextExecuto
 // Reload refetches the object from the database
 // using the primary keys with an executor.
 func (o *PostsAudit) Reload(ctx context.Context, exec boil.ContextExecutor) error {
-	ret, err := FindPostsAudit(ctx, exec, o.ID, o.UserID, o.ContributedAt)
+	ret, err := FindPostsAudit(ctx, exec, o.ID, o.ContributedBy, o.ContributedAt)
 	if err != nil {
 		return err
 	}
@@ -898,16 +898,16 @@ func (o *PostsAuditSlice) ReloadAll(ctx context.Context, exec boil.ContextExecut
 }
 
 // PostsAuditExists checks if the PostsAudit row exists.
-func PostsAuditExists(ctx context.Context, exec boil.ContextExecutor, iD int, userID int, contributedAt time.Time) (bool, error) {
+func PostsAuditExists(ctx context.Context, exec boil.ContextExecutor, iD int, contributedBy int, contributedAt time.Time) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"posts_audit\" where \"id\"=$1 AND \"user_id\"=$2 AND \"contributed_at\"=$3 limit 1)"
+	sql := "select exists(select 1 from \"posts_audit\" where \"id\"=$1 AND \"contributed_by\"=$2 AND \"contributed_at\"=$3 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
 		fmt.Fprintln(writer, sql)
-		fmt.Fprintln(writer, iD, userID, contributedAt)
+		fmt.Fprintln(writer, iD, contributedBy, contributedAt)
 	}
-	row := exec.QueryRowContext(ctx, sql, iD, userID, contributedAt)
+	row := exec.QueryRowContext(ctx, sql, iD, contributedBy, contributedAt)
 
 	err := row.Scan(&exists)
 	if err != nil {

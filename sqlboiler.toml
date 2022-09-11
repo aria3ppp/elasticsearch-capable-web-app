@@ -1,5 +1,9 @@
 wipe = true
 
+[aliases.tables.posts.relationships.posts_contributed_by_fk_users]
+local = "ContributedPosts"
+foreign = "ContributingUser"
+
 [psql]
 blacklist = ["schema_migrations"]
 

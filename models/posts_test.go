@@ -494,7 +494,7 @@ func testPostsInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testPostToOneUserUsingUser(t *testing.T) {
+func testPostToOneUserUsingContributingUser(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
@@ -514,12 +514,12 @@ func testPostToOneUserUsingUser(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	local.UserID = foreign.ID
+	local.ContributedBy = foreign.ID
 	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.User().One(ctx, tx)
+	check, err := local.ContributingUser().One(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -529,23 +529,23 @@ func testPostToOneUserUsingUser(t *testing.T) {
 	}
 
 	slice := PostSlice{&local}
-	if err = local.L.LoadUser(ctx, tx, false, (*[]*Post)(&slice), nil); err != nil {
+	if err = local.L.LoadContributingUser(ctx, tx, false, (*[]*Post)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.User == nil {
+	if local.R.ContributingUser == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
-	local.R.User = nil
-	if err = local.L.LoadUser(ctx, tx, true, &local, nil); err != nil {
+	local.R.ContributingUser = nil
+	if err = local.L.LoadContributingUser(ctx, tx, true, &local, nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.User == nil {
+	if local.R.ContributingUser == nil {
 		t.Error("struct should have been eager loaded")
 	}
 }
 
-func testPostToOneSetOpUserUsingUser(t *testing.T) {
+func testPostToOneSetOpUserUsingContributingUser(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -574,31 +574,31 @@ func testPostToOneSetOpUserUsingUser(t *testing.T) {
 	}
 
 	for i, x := range []*User{&b, &c} {
-		err = a.SetUser(ctx, tx, i != 0, x)
+		err = a.SetContributingUser(ctx, tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if a.R.User != x {
+		if a.R.ContributingUser != x {
 			t.Error("relationship struct not set to correct value")
 		}
 
-		if x.R.Posts[0] != &a {
+		if x.R.ContributedPosts[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
-		if a.UserID != x.ID {
-			t.Error("foreign key was wrong value", a.UserID)
+		if a.ContributedBy != x.ID {
+			t.Error("foreign key was wrong value", a.ContributedBy)
 		}
 
-		zero := reflect.Zero(reflect.TypeOf(a.UserID))
-		reflect.Indirect(reflect.ValueOf(&a.UserID)).Set(zero)
+		zero := reflect.Zero(reflect.TypeOf(a.ContributedBy))
+		reflect.Indirect(reflect.ValueOf(&a.ContributedBy)).Set(zero)
 
 		if err = a.Reload(ctx, tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 
-		if a.UserID != x.ID {
-			t.Error("foreign key was wrong value", a.UserID, x.ID)
+		if a.ContributedBy != x.ID {
+			t.Error("foreign key was wrong value", a.ContributedBy, x.ID)
 		}
 	}
 }
@@ -677,7 +677,7 @@ func testPostsSelect(t *testing.T) {
 }
 
 var (
-	postDBTypes = map[string]string{`ID`: `integer`, `Title`: `character varying`, `Body`: `text`, `UserID`: `integer`, `ContributedAt`: `timestamp with time zone`, `Deleted`: `boolean`}
+	postDBTypes = map[string]string{`ID`: `integer`, `Title`: `character varying`, `Body`: `text`, `ContributedBy`: `integer`, `ContributedAt`: `timestamp with time zone`, `Deleted`: `boolean`}
 	_           = bytes.MinRead
 )
 

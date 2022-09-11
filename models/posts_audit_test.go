@@ -149,7 +149,7 @@ func testPostsAuditsExists(t *testing.T) {
 		t.Error(err)
 	}
 
-	e, err := PostsAuditExists(ctx, tx, o.ID, o.UserID, o.ContributedAt)
+	e, err := PostsAuditExists(ctx, tx, o.ID, o.ContributedBy, o.ContributedAt)
 	if err != nil {
 		t.Errorf("Unable to check if PostsAudit exists: %s", err)
 	}
@@ -175,7 +175,7 @@ func testPostsAuditsFind(t *testing.T) {
 		t.Error(err)
 	}
 
-	postsAuditFound, err := FindPostsAudit(ctx, tx, o.ID, o.UserID, o.ContributedAt)
+	postsAuditFound, err := FindPostsAudit(ctx, tx, o.ID, o.ContributedBy, o.ContributedAt)
 	if err != nil {
 		t.Error(err)
 	}
@@ -568,7 +568,7 @@ func testPostsAuditsSelect(t *testing.T) {
 }
 
 var (
-	postsAuditDBTypes = map[string]string{`ID`: `integer`, `Title`: `character varying`, `Body`: `text`, `UserID`: `integer`, `ContributedAt`: `timestamp with time zone`, `Deleted`: `boolean`}
+	postsAuditDBTypes = map[string]string{`ID`: `integer`, `Title`: `character varying`, `Body`: `text`, `ContributedBy`: `integer`, `ContributedAt`: `timestamp with time zone`, `Deleted`: `boolean`}
 	_                 = bytes.MinRead
 )
 

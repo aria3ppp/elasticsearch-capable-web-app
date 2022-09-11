@@ -11,9 +11,9 @@ call add_contribution_and_delete_columns(
 	p_contributer_table => 'users',
 	p_contributer_table_pk => 'id',
 	
-	p_column_contributed_by_name => 'user_id',
+	p_column_contributed_by_name => 'contributed_by',
 	p_column_contributed_by_type => 'INT NOT NULL',
-	p_column_contributed_by_fk_constraint_name => concat_ws('_', 'posts', 'fk', 'users'),
+	p_column_contributed_by_fk_constraint_name => 'posts_contributed_by_fk_users',
 	
 	p_column_contributed_at_name => 'contributed_at',
 	p_column_contributed_at_type => 'TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP',
@@ -24,16 +24,16 @@ call add_contribution_and_delete_columns(
 
 call create_audit_table(
 	p_table => 'posts',
-	p_audit_table_name => concat_ws('_', 'posts', 'audit'),
-	p_audit_table_pk_columns_order_sep_by_comma => 'id, user_id, contributed_at'
+	p_audit_table_name => 'posts_audit',
+	p_audit_table_pk_columns_order_sep_by_comma => 'id, contributed_by, contributed_at'
 );
 
-call create_audit_update_trigger_on_table(
+call build_trigger_audit_on_update(
 	p_table => 'posts',
 	p_table_contributed_at_column => 'contributed_at',
-	p_audit_table_name => concat_ws('_', 'posts', 'audit'),
-	p_trigger_name => concat_ws('_', 'trigger', 'posts', 'update', 'audit'),
-	p_trigger_function_name => concat_ws('_', 'update', 'posts', 'trigger', 'audit')
+	p_audit_table_name => 'posts_audit',
+	p_trigger_name => 'posts_trigger_audit_on_update',
+	p_trigger_function_name => 'posts_function_triggers_on_update'
 );
 
 COMMIT;
