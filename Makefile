@@ -1,5 +1,10 @@
 ENV_FILE ?= .env
-APP_DSN ?= $(shell sed -r -n 's/DSN="(.+)"/\1/p' $(ENV_FILE))
+POSTGRES_USER ?= $(shell sed -r -n 's/POSTGRES_USER="(.+)"/\1/p' $(ENV_FILE))
+POSTGRES_PASSWORD ?= $(shell sed -r -n 's/POSTGRES_PASSWORD="(.+)"/\1/p' $(ENV_FILE))
+POSTGRES_HOST ?= $(shell sed -r -n 's/POSTGRES_HOST="(.+)"/\1/p' $(ENV_FILE))
+POSTGRES_PORT ?= $(shell sed -r -n 's/POSTGRES_PORT="(.+)"/\1/p' $(ENV_FILE))
+POSTGRES_DB ?= $(shell sed -r -n 's/POSTGRES_DB="(.+)"/\1/p' $(ENV_FILE))
+APP_DSN ?= "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable"
 MIGRATE := docker run --rm -v $(shell pwd)/migrations:/migrations --user "$(shell id -u):$(shell id -g)" --network host migrate/migrate:4 -path=/migrations/ -database "$(APP_DSN)"
 
 .PHONY: default
@@ -37,7 +42,7 @@ run: ## run main package
 
 .PHONY: build
 build: ## build main package
-	go build .
+	CGO_ENABLED=0 go build -o server .
 
 .PHONY: generate
 generate: ## run 'go generate' for all packages

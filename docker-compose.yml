@@ -33,6 +33,9 @@ services:
   server:
     build:
       context: .
+      args:
+        - GO_VERSION=1.19
+        - MIGRATE_VERSION=4.15.2
     hostname: server
     env_file: .env
     ports:
@@ -80,6 +83,9 @@ services:
   logstash:
     build:
       context: logstash
+      args:
+        - LOGSTASH_VERSION=8.4.0
+        - JDBC_POSTGRES_DRIVER_VERSION=42.4.2
     env_file: .env
     volumes:
       - ./logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml

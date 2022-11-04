@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"elasticsearch-capable-web-app/models"
 
@@ -17,23 +16,7 @@ type Database struct {
 	logger zerolog.Logger
 }
 
-type ConnConfig struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
-	DbName   string
-}
-
-func New(cfg ConnConfig, logger zerolog.Logger) (*Database, error) {
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host,
-		cfg.Port,
-		cfg.Username,
-		cfg.Password,
-		cfg.DbName,
-	)
+func New(dsn string, logger zerolog.Logger) (*Database, error) {
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err

@@ -2,8 +2,9 @@
 
 echo "[`date`] Running entrypoint script..."
 
+# export APP_DSN env to server
 if [[ -z ${APP_DSN} ]]; then
-  export APP_DSN=`sed -n 's/^DSN="\(.*\)"/\1/p' .env`
+  export APP_DSN="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
 fi
 
 echo "[`date`] Running DB migrations..."

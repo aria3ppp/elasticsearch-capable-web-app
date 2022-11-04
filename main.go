@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 
 	"elasticsearch-capable-web-app/db"
@@ -15,15 +16,9 @@ import (
 func main() {
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
-	dbConfig := db.ConnConfig{
-		Host:     os.Getenv("POSTGRES_HOST"),
-		Port:     os.Getenv("POSTGRES_PORT"),
-		Username: os.Getenv("POSTGRES_USER"),
-		Password: os.Getenv("POSTGRES_PASSWORD"),
-		DbName:   os.Getenv("POSTGRES_DB"),
-	}
-	logger.Info().Interface("config", &dbConfig).Msg("config:")
-	dbInstance, err := db.New(dbConfig, logger)
+	dsn := os.Getenv("APP_DSN")
+	logger.Info().Interface("dsn", dsn)
+	dbInstance, err := db.New(dsn, logger)
 	if err != nil {
 		logger.Err(err).Msg("Connection failed")
 		os.Exit(1)
@@ -34,6 +29,21 @@ func main() {
 	esClient, err := elasticsearch.NewDefaultClient()
 	if err != nil {
 		logger.Err(err).Msg("Connection failed")
+		os.Exit(1)
+	}
+	resp, err := esClient.Indices.Create("posts")
+	if err != nil {
+		logger.Err(err).Msg("Elasticsearch failed creating index")
+		os.Exit(1)
+	}
+	if resp.IsError() {
+		var e map[string]any
+		if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
+			logger.Err(err).
+				Msg("failed decoding elasticsearch response body error")
+		} else {
+			logger.Error().Interface("Elasticsearch response error", e)
+		}
 		os.Exit(1)
 	}
 

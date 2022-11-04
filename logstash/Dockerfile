@@ -1,7 +1,9 @@
-FROM logstash:8.4.0
+ARG LOGSTASH_VERSION
+FROM logstash:${LOGSTASH_VERSION}
 
 RUN /opt/logstash/bin/logstash-plugin install logstash-integration-jdbc
 RUN mkdir /opt/logstash/vendor/jdbc
-RUN curl -o /opt/logstash/vendor/jdbc/postgresql-42.4.2.jar https://jdbc.postgresql.org/download/postgresql-42.4.2.jar
+ARG JDBC_POSTGRES_DRIVER_VERSION
+RUN curl -o /opt/logstash/vendor/jdbc/postgresql-${JDBC_POSTGRES_DRIVER_VERSION}.jar https://jdbc.postgresql.org/download/postgresql-${JDBC_POSTGRES_DRIVER_VERSION}.jar
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]

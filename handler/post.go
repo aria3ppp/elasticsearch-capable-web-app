@@ -164,7 +164,15 @@ func (h *Handler) SearchPosts(c echo.Context) error {
 	}
 
 	body := fmt.Sprintf(
-		`{"query": {"multi_match": {"query": "%s", "fields": ["title", "body"], "fuzziness": "AUTO"}}}`,
+		`{
+			"query": {
+				"multi_match": {
+					"query": "%s",
+					"fields": ["title", "body"],
+					"fuzziness": "AUTO"
+				}
+			}
+		}`,
 		query,
 	)
 
