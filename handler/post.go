@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -163,22 +164,26 @@ func (h *Handler) SearchPosts(c echo.Context) error {
 		)
 	}
 
-	body := fmt.Sprintf(
-		`{
-			"query": {
-				"multi_match": {
-					"query": "%s",
-					"fields": ["title", "body"],
-					"fuzziness": "AUTO"
+	/*
+		{
+				"query": {
+					"multi_match": {
+						"query": "%s",
+						"fields": ["title", "body"],
+						"fuzziness": "AUTO"
+					}
 				}
 			}
-		}`,
+	*/
+
+	body := fmt.Sprintf(
+		`{"query": {"multi_match": {"query": "%s", "fields": ["title", "body"], "fuzziness": "AUTO"}}}`,
 		query,
 	)
 
 	res, err := h.esClient.Search(
 		h.esClient.Search.WithContext(context.Background()),
-		h.esClient.Search.WithIndex("posts"),
+		h.esClient.Search.WithIndex(os.Getenv("ELASTICSEARCH_INDEX_POSTS")),
 		h.esClient.Search.WithBody(strings.NewReader(body)),
 		h.esClient.Search.WithPretty(),
 	)

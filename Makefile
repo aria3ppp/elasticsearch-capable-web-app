@@ -1,11 +1,19 @@
-ENV_FILE ?= .env
-POSTGRES_USER ?= $(shell sed -r -n 's/POSTGRES_USER="(.+)"/\1/p' $(ENV_FILE))
-POSTGRES_PASSWORD ?= $(shell sed -r -n 's/POSTGRES_PASSWORD="(.+)"/\1/p' $(ENV_FILE))
-POSTGRES_HOST ?= $(shell sed -r -n 's/POSTGRES_HOST="(.+)"/\1/p' $(ENV_FILE))
-POSTGRES_PORT ?= $(shell sed -r -n 's/POSTGRES_PORT="(.+)"/\1/p' $(ENV_FILE))
-POSTGRES_DB ?= $(shell sed -r -n 's/POSTGRES_DB="(.+)"/\1/p' $(ENV_FILE))
-APP_DSN ?= "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable"
-MIGRATE := docker run --rm -v $(shell pwd)/migrations:/migrations --user "$(shell id -u):$(shell id -g)" --network host migrate/migrate:4 -path=/migrations/ -database "$(APP_DSN)"
+ENVFILE ?= .env
+$(if $(wildcard $(ENVFILE)), \
+	$(foreach VAR, $(shell sed -ne 's/ *\#.*$$//; /./ s/=.*$$// p' $(ENVFILE)), \
+		$(if $($(VAR)),, \
+			$(eval $(shell \
+					echo export $(VAR)=$(shell sed -nr 's/$(VAR)=(.+)/\1/p' $(ENVFILE)) \
+			)) \
+		) \
+	) \
+)
+
+MIGRATE_DSN ?= "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=disable"
+MIGRATE := docker run --rm -v $(shell pwd)/migrations:/migrations --user "$(shell id -u):$(shell id -g)" --network host migrate/migrate:4 -path=/migrations -database "$(MIGRATE_DSN)"
+
+DOCKER_COMPOSE_DEPENDENCIES := docker compose -f docker-compose.dependencies.yml
+DOCKER_COMPOSE_SERVER := $(DOCKER_COMPOSE_DEPENDENCIES) -f docker-compose.server.yml
 
 .PHONY: default
 default: help
@@ -14,6 +22,22 @@ default: help
 .PHONY: help
 help: ## help information about make commands
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: dependencies-up
+dependencies-up: ## create and start dependency services
+	$(DOCKER_COMPOSE_DEPENDENCIES) up -d
+
+.PHONY: dependencies-down
+dependencies-down: ## stop and remove dependency services
+	$(DOCKER_COMPOSE_DEPENDENCIES) down
+
+.PHONY: server-up
+server-up: ## create and start server
+	$(DOCKER_COMPOSE_SERVER) up -d
+
+.PHONY: server-down
+server-down: ## stop and remove server
+	$(DOCKER_COMPOSE_SERVER) down
 
 .PHONY: test
 test: ## run unit tests

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"elasticsearch-capable-web-app/db"
@@ -16,7 +17,14 @@ import (
 func main() {
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
-	dsn := os.Getenv("APP_DSN")
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_PORT"),
+		os.Getenv("POSTGRES_DB"),
+	)
 	logger.Info().Interface("dsn", dsn)
 	dbInstance, err := db.New(dsn, logger)
 	if err != nil {
@@ -31,7 +39,7 @@ func main() {
 		logger.Err(err).Msg("Connection failed")
 		os.Exit(1)
 	}
-	resp, err := esClient.Indices.Create("posts")
+	resp, err := esClient.Indices.Create(os.Getenv("ELASTICSEARCH_INDEX_POSTS"))
 	if err != nil {
 		logger.Err(err).Msg("Elasticsearch failed creating index")
 		os.Exit(1)
