@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 
 	"elasticsearch-capable-web-app/db"
@@ -33,26 +34,59 @@ func main() {
 	}
 	logger.Info().Msg("Database connection established")
 
-	// Connect using default address
+	// Connect to elasticsearch
 	esClient, err := elasticsearch.NewDefaultClient()
 	if err != nil {
 		logger.Err(err).Msg("Connection failed")
 		os.Exit(1)
 	}
-	resp, err := esClient.Indices.Create(os.Getenv("ELASTICSEARCH_INDEX_POSTS"))
+	// check posts index exists
+	postsIndex := os.Getenv("ELASTICSEARCH_INDEX_POSTS")
+	resp, err := esClient.Indices.Exists([]string{postsIndex})
 	if err != nil {
-		logger.Err(err).Msg("Elasticsearch failed creating index")
-		os.Exit(1)
+		logger.Err(err).
+			Str("index", postsIndex).
+			Msg("esClient.Indices.Exists error")
+		return
 	}
-	if resp.IsError() {
+	if resp.StatusCode == http.StatusNotFound {
+		// create posts index
+		resp, err := esClient.Indices.Create(postsIndex)
+		if err != nil {
+			logger.Err(err).
+				Str("index", postsIndex).
+				Msg("esClient.Indices.Create error")
+			return
+		}
+		if resp.IsError() {
+			var e map[string]any
+			if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
+				logger.Err(err).
+					Str("index", postsIndex).
+					Msg("failed decoding elasticsearch response body error")
+			} else {
+				logger.Error().
+					Int("http code", resp.StatusCode).
+					Interface("type", e["error"].(map[string]interface{})["type"]).
+					Interface("reason", e["error"].(map[string]interface{})["reason"]).
+					Msg("esClient.Indices.Create response error")
+			}
+			return
+		}
+	} else if resp.IsError() {
 		var e map[string]any
 		if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
 			logger.Err(err).
+				Str("index", postsIndex).
 				Msg("failed decoding elasticsearch response body error")
 		} else {
-			logger.Error().Interface("Elasticsearch response error", e)
+			logger.Error().
+				Int("http code", resp.StatusCode).
+				Interface("type", e["error"].(map[string]interface{})["type"]).
+				Interface("reason", e["error"].(map[string]interface{})["reason"]).
+				Msg("esClient.Indices.Exists response error")
 		}
-		os.Exit(1)
+		return
 	}
 
 	h := handler.New(dbInstance, esClient, logger)

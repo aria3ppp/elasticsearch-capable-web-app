@@ -61,12 +61,9 @@ test-arg-cover: ## run unit tests by passing $ARG env value to 'go test' command
 	go tool cover -html=coverage.out
 
 .PHONY: run
-run: ## run main package
-	go run .
-
-.PHONY: build
-build: ## build main package
-	CGO_ENABLED=0 go build -o server .
+run: ## build server and then run entrypoint.sh
+	go build -o server .
+	./entrypoint.sh
 
 .PHONY: generate
 generate: ## run 'go generate' for all packages
