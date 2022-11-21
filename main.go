@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"elasticsearch-capable-web-app/db"
 	"elasticsearch-capable-web-app/handler"
 
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"github.com/labstack/echo/v4"
 
 	"github.com/rs/zerolog"
@@ -18,6 +20,7 @@ import (
 func main() {
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
+	// Connect to database
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		os.Getenv("POSTGRES_USER"),
@@ -40,58 +43,72 @@ func main() {
 		logger.Err(err).Msg("Connection failed")
 		os.Exit(1)
 	}
-	// check posts index exists
+	// Create posts index if not exists
 	postsIndex := os.Getenv("ELASTICSEARCH_INDEX_POSTS")
-	resp, err := esClient.Indices.Exists([]string{postsIndex})
-	if err != nil {
+	postsMappings := `{
+		"mappings": {
+			"properties": {
+				"id": { "type": "keyword", "index": false },
+				"title": { "type": "text" },
+				"body": { "type": "text" },
+				"contributed_by": { "type": "keyword", "index": false },
+				"contributed_at": { "type": "date", "index": false },
+				"deleted": { "type": "boolean", "index": false }
+			}
+		}
+	}`
+	if err := createIndexIfNotExists(esClient, postsIndex, postsMappings); err != nil {
 		logger.Err(err).
 			Str("index", postsIndex).
-			Msg("esClient.Indices.Exists error")
-		return
-	}
-	if resp.StatusCode == http.StatusNotFound {
-		// create posts index
-		resp, err := esClient.Indices.Create(postsIndex)
-		if err != nil {
-			logger.Err(err).
-				Str("index", postsIndex).
-				Msg("esClient.Indices.Create error")
-			return
-		}
-		if resp.IsError() {
-			var e map[string]any
-			if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
-				logger.Err(err).
-					Str("index", postsIndex).
-					Msg("failed decoding elasticsearch response body error")
-			} else {
-				logger.Error().
-					Int("http code", resp.StatusCode).
-					Interface("type", e["error"].(map[string]interface{})["type"]).
-					Interface("reason", e["error"].(map[string]interface{})["reason"]).
-					Msg("esClient.Indices.Create response error")
-			}
-			return
-		}
-	} else if resp.IsError() {
-		var e map[string]any
-		if err = json.NewDecoder(resp.Body).Decode(&e); err != nil {
-			logger.Err(err).
-				Str("index", postsIndex).
-				Msg("failed decoding elasticsearch response body error")
-		} else {
-			logger.Error().
-				Int("http code", resp.StatusCode).
-				Interface("type", e["error"].(map[string]interface{})["type"]).
-				Interface("reason", e["error"].(map[string]interface{})["reason"]).
-				Msg("esClient.Indices.Exists response error")
-		}
-		return
+			Str("mappings", postsMappings).
+			Msg("Creating index failed")
+		os.Exit(1)
 	}
 
+	// Initialize ans register handlers
 	h := handler.New(dbInstance, esClient, logger)
 	router := echo.New()
-	rg := router.Group("/v1")
-	h.Register(rg)
+	h.Register(router.Group("/v1"))
+
+	// Start server
 	router.Start(":8080")
+}
+
+func createIndexIfNotExists(
+	client *elasticsearch.Client,
+	index string,
+	mappings string,
+) error {
+	// check index exists
+	resp, err := client.Indices.Exists([]string{index})
+	if err != nil {
+		return err
+	}
+	// create index with mappings
+	if resp.StatusCode == http.StatusNotFound {
+		resp, err := client.Indices.Create(
+			index,
+			client.Indices.Create.WithBody(strings.NewReader(mappings)),
+		)
+		if err != nil {
+			return err
+		}
+		if resp.IsError() {
+			return responseError(resp)
+		}
+	} else if resp.IsError() {
+		return responseError(resp)
+	}
+	return nil
+}
+
+func responseError(resp *esapi.Response) error {
+	var em map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&em); err != nil {
+		return err
+	}
+	return fmt.Errorf("[%s] %s: %s",
+		resp.Status(),
+		em["error"].(map[string]interface{})["type"],
+		em["error"].(map[string]interface{})["reason"])
 }

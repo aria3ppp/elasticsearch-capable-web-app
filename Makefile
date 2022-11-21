@@ -69,6 +69,10 @@ run: ## build server and then run entrypoint.sh
 generate: ## run 'go generate' for all packages
 	go generate ./...
 
+.PHONY: generate-models
+generate-models: ## run sqlboiler to generate models
+	sqlboiler --wipe psql
+
 .PHONY: lint
 lint: ## run staticcheck
 	@staticcheck ./...
